@@ -1,0 +1,185 @@
+<html>
+    <head>
+    </head>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<style> circle {fill: lightblue; stroke: black;} </style>
+<body onload='init()'>
+<div style=" align: center">
+    <h1>Vehicle Efficlency Visualizer</h1>
+         <div class="slidecontainer">
+            <h2>Vehicle Efficiency (Average City MPG) Slider</h2>
+            <input type="range" min="10" max="150" value="150" class="slider" id="Range">
+        </div>
+        <h3>We have created a scatter plot of different cars and makes with  AverageHighwayMPG on the y-Axis and AverageCityMPG on the x-axis</h3>
+        <text style="color:green">Green circles denote electric cars|</text>
+        <text style="color:blue">Blue circles denote diesel cars|</text>
+        <text style="color:red">Red circles denote gasoline cars</text><br>
+        <text><i>Tooltip shows the make, cylinders, highway and city MPG</i></text>
+        <svg width="1200" height="600">
+            </svg>
+</div>
+
+<script>
+
+
+
+async function init() 
+{
+
+
+//Creating Story
+
+const d = await d3.csv("https://flunky.github.io/cars2017.csv");
+
+//Defining y axis 
+var y = d3.scaleLog()
+.domain([10, 150])
+.range([500,0]);
+
+//Defining x Axis
+var x = d3.scaleLog()
+.domain([10, 150])
+.range([ 0,1000]);
+
+//Defining Ordinal Scale 
+var f=d3.scaleOrdinal()
+.domain(["Diesel","Electricity","Gasoline"])
+.range(["blue","green","red"]);
+
+//Defining tooltip
+var div = d3.select("body").append("div")
+     .attr("class", "tooltip-donut")
+     .attr("id", "tooltip")
+     .style("opacity", 0);
+
+
+
+
+//Creating Y Axis
+d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+"," +50+")")
+.call(d3.axisLeft(y).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+//Creating X axis
+d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+","+550+")")
+.text("Average Highway MPG")
+.call(d3.axisBottom(x).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+"," +50+")")
+.attr("id","points")
+.selectAll("circle")
+.data(d)
+.enter()
+.append("circle")
+.attr("cx",function(d,i) {return x(d.AverageCityMPG)})
+.attr("cy",function(d,i) {return y(d.AverageHighwayMPG)})
+.attr("r",function(d,i) {return parseInt(d.EngineCylinders)+10})
+.style("fill",function(d,i){return f(d.Fuel)})
+.on('mouseover', function (d, i) {
+            d3.select(this).transition()
+               .duration('50')
+               .attr('opacity', '.85');
+
+            div.transition()
+               .duration(50)
+               .style("opacity", 1)
+               .style("text");
+            
+            div.html("Make :"+d.Make+", Cylinders : "+d.EngineCylinders+ 
+               ",Highway MPG:"+d.AverageHighwayMPG + ", City MPG:"+d.AverageCityMPG)
+               .transition()
+               .style("text-color","black")
+               .style("opacity", 1)
+               .style("left", (d3.event.pageX + 10) + "px")
+               .style("top", (d3.event.pageY - 15) + "px")
+               ;
+     })
+     .on('mouseout', function (d, i) {
+          d3.select(this).transition()
+               .duration('50')
+               .attr('opacity', '1');
+          div.transition()
+               .duration('50')
+               .style("opacity", 0)});
+
+//function for changing range
+function changeRange(cr)
+{
+    
+    var svg = d3.select("svg");
+    svg.selectAll("*").remove();
+
+    var nd = d.filter(function (d) {if (parseFloat(d.AverageCityMPG)<=parseFloat(cr)) {return true} else {return false}})
+    console.log(nd);
+
+    d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+"," +50+")")
+.attr("id","points")
+.selectAll("circle")
+.data(nd)
+.enter()
+.append("circle")
+.attr("cx",function(d,i) {return x(d.AverageCityMPG)})
+.attr("cy",function(d,i) {return y(d.AverageHighwayMPG)})
+.attr("r",function(d,i) {return parseInt(d.EngineCylinders)+10})
+.style("fill",function(d,i){return f(d.Fuel)})
+.on('mouseover', function (d, i) {
+            d3.select(this).transition()
+               .duration('50')
+               .attr('opacity', '.85');
+
+            div.transition()
+               .duration(50)
+               .style("opacity", 1)
+               .style("text");
+            
+            div.html("Make :"+d.Make+", Cylinders : "+d.EngineCylinders+ 
+               ",Highway MPG:"+d.AverageHighwayMPG + ", City MPG:"+d.AverageCityMPG)
+               .transition()
+               .style("text-color","black")
+               .style("opacity", 1)
+               .style("left", (d3.event.pageX + 10) + "px")
+               .style("top", (d3.event.pageY - 15) + "px")
+               ;
+     })
+     .on('mouseout', function (d, i) {
+          d3.select(this).transition()
+               .duration('50')
+               .attr('opacity', '1');
+          div.transition()
+               .duration('50')
+               .style("opacity", 0)});
+
+    d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+"," +50+")")
+.call(d3.axisLeft(y).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+//Creating X axis
+d3.select("svg")
+.append("g")
+.attr("transform", "translate("+50+","+550+")")
+.call(d3.axisBottom(x).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+}
+
+
+//Creating Slider
+var Slider = d3.select("#Range");
+Slider.on("change",function(){changeRange(parseFloat(this.value))});
+}
+
+
+
+</script>
+
+
+
+</body>
+</html>
